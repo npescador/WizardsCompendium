@@ -45,6 +45,11 @@
 			path = WizardsCompendiumUITests;
 			sourceTree = "<group>";
 		};
+		716E00CC2ECF5E7C006903D2 /* Docs */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Docs;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +80,7 @@
 		716E00992ECF5E0E006903D2 = {
 			isa = PBXGroup;
 			children = (
+				716E00CC2ECF5E7C006903D2 /* Docs */,
 				716E00A42ECF5E0E006903D2 /* WizardsCompendium */,
 				716E00B22ECF5E10006903D2 /* WizardsCompendiumTests */,
 				716E00BC2ECF5E10006903D2 /* WizardsCompendiumUITests */,
@@ -109,6 +115,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				716E00A42ECF5E0E006903D2 /* WizardsCompendium */,
+				716E00CC2ECF5E7C006903D2 /* Docs */,
 			);
 			name = WizardsCompendium;
 			packageProductDependencies = (
