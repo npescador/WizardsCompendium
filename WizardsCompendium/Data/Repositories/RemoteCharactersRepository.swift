@@ -7,23 +7,25 @@ public final class RemoteCharactersRepository: CharactersRepository {
         self.client = client
     }
 
-    public func fetchCharacters(page: Int) async throws -> [Character] {
+    public func fetchCharacters(page: Int, house: String?) async throws -> [Character] {
         let response: JSONAPIListResponse<CharacterAttributesDTO> = try await client.get(
             "characters",
             query: [
-                URLQueryItem(name: "page[number]", value: "\(page)")
-            ]
+                URLQueryItem(name: "page[number]", value: "\(page)"),
+                houseQuery(house)
+            ].compactMap { $0 }
         )
         return response.data.map(Self.map)
     }
 
-    public func searchCharacters(query: String, page: Int) async throws -> [Character] {
+    public func searchCharacters(query: String, page: Int, house: String?) async throws -> [Character] {
         let response: JSONAPIListResponse<CharacterAttributesDTO> = try await client.get(
             "characters",
             query: [
                 URLQueryItem(name: "filter[name_cont]", value: query),
-                URLQueryItem(name: "page[number]", value: "\(page)")
-            ]
+                URLQueryItem(name: "page[number]", value: "\(page)"),
+                houseQuery(house)
+            ].compactMap { $0 }
         )
         return response.data.map(Self.map)
     }
@@ -52,5 +54,10 @@ public final class RemoteCharactersRepository: CharactersRepository {
             romances: dto.romances ?? [],
             wikiURL: dto.wiki.flatMap(URL.init(string:))
         )
+    }
+
+    private func houseQuery(_ house: String?) -> URLQueryItem? {
+        guard let house, !house.isEmpty else { return nil }
+        return URLQueryItem(name: "filter[house_eq]", value: house)
     }
 }

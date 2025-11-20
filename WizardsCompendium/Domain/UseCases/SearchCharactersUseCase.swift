@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol SearchCharactersUseCase {
-    func execute(query: String, page: Int) async throws -> [Character]
+    func execute(query: String, page: Int, house: String?) async throws -> [Character]
 }
 
 public final class DefaultSearchCharactersUseCase: SearchCharactersUseCase {
@@ -11,7 +11,7 @@ public final class DefaultSearchCharactersUseCase: SearchCharactersUseCase {
         self.repo = repo
     }
 
-    public func execute(query: String, page: Int) async throws -> [Character] {
-        try await repo.searchCharacters(query: query, page: page)
+    public func execute(query: String, page: Int, house: String?) async throws -> [Character] {
+        try await repo.searchCharacters(query: query, page: page, house: house)
     }
 }

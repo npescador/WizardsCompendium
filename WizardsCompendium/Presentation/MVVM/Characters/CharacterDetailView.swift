@@ -1,18 +1,36 @@
 import SwiftUI
 
 struct CharacterDetailView: View {
-    let character: Character
+    let initialCharacter: Character
+    @State private var viewModel: CharacterDetailViewModel
+
+    init(character: Character, fetchDetail: FetchCharacterDetailUseCase) {
+        self.initialCharacter = character
+        _viewModel = State(initialValue: CharacterDetailViewModel(characterID: character.id, fetchDetail: fetchDetail))
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
-                infoSection
+                content
             }
             .padding()
         }
-        .navigationTitle(character.name)
+        .navigationTitle(displayName)
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            viewModel.load()
+        }
+    }
+
+    private var displayName: String {
+        switch viewModel.state {
+        case .loaded(let character):
+            return character.name
+        default:
+            return initialCharacter.name
+        }
     }
 
     private var header: some View {
@@ -26,7 +44,25 @@ struct CharacterDetailView: View {
         }
     }
 
-    private var infoSection: some View {
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.state {
+        case .idle, .loading:
+            ProgressView("Cargando detalle...")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .failed(let message):
+            VStack(spacing: 12) {
+                Text(message)
+                    .foregroundStyle(.secondary)
+                Button("Reintentar") { viewModel.retry() }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        case .loaded(let character):
+            infoSection(character)
+        }
+    }
+
+    private func infoSection(_ character: Character) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if let house = character.house {
                 labeled("Casa", value: house)

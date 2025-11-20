@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     private let viewModel: CharactersViewModel
+    private let repository: CharactersRepository
 
     init() {
         let client = PotterDBClient()
@@ -19,10 +20,11 @@ struct ContentView: View {
             fetchCharacters: fetch,
             searchCharacters: search
         )
+        self.repository = repository
     }
 
     var body: some View {
-        CharactersView(viewModel: viewModel)
+        CharactersView(viewModel: viewModel, repository: repository)
     }
 }
 
@@ -31,16 +33,17 @@ struct ContentView: View {
         viewModel: CharactersViewModel(
             fetchCharacters: PreviewCharactersRepository(),
             searchCharacters: PreviewCharactersRepository()
-        )
+        ),
+        repository: PreviewCharactersRepository()
     )
 }
 
 private final class PreviewCharactersRepository: CharactersRepository, FetchCharactersUseCase, SearchCharactersUseCase {
-    func execute(page: Int) async throws -> [Character] { try await fetchCharacters(page: page) }
-    func execute(query: String, page: Int) async throws -> [Character] { try await searchCharacters(query: query, page: page) }
+    func execute(page: Int, house: String?) async throws -> [Character] { try await fetchCharacters(page: page, house: house) }
+    func execute(query: String, page: Int, house: String?) async throws -> [Character] { try await searchCharacters(query: query, page: page, house: house) }
 
-    func fetchCharacters(page: Int) async throws -> [Character] { Self.sample }
-    func searchCharacters(query: String, page: Int) async throws -> [Character] { Self.sample.filter { $0.name.lowercased().contains(query.lowercased()) } }
+    func fetchCharacters(page: Int, house: String?) async throws -> [Character] { Self.sample }
+    func searchCharacters(query: String, page: Int, house: String?) async throws -> [Character] { Self.sample.filter { $0.name.lowercased().contains(query.lowercased()) } }
     func fetchCharacterDetail(idOrSlug: String) async throws -> Character { Self.sample[0] }
 
     private static let sample: [Character] = [

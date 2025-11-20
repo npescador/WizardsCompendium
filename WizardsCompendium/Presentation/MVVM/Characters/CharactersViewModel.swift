@@ -10,6 +10,7 @@ final class CharactersViewModel {
     var query: String = ""
     var page: Int = 1
     var canLoadMore: Bool = true
+    var selectedHouse: String?
 
     private let fetchCharacters: FetchCharactersUseCase
     private let searchCharacters: SearchCharactersUseCase
@@ -29,6 +30,11 @@ final class CharactersViewModel {
 
     func onQueryChanged(_ text: String) {
         query = text
+        Task { await loadInitial() }
+    }
+
+    func onHouseChanged(_ house: String?) {
+        selectedHouse = house
         Task { await loadInitial() }
     }
 
@@ -80,10 +86,10 @@ final class CharactersViewModel {
     }
 
     private func fetchCharactersPage(_ page: Int) async throws -> [Character] {
-        try await fetchCharacters.execute(page: page)
+        try await fetchCharacters.execute(page: page, house: selectedHouse)
     }
 
     private func searchCharactersPage(_ page: Int, query: String) async throws -> [Character] {
-        try await searchCharacters.execute(query: query, page: page)
+        try await searchCharacters.execute(query: query, page: page, house: selectedHouse)
     }
 }
