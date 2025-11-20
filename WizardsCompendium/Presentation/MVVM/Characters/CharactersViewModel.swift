@@ -11,16 +11,21 @@ final class CharactersViewModel {
     var page: Int = 1
     var canLoadMore: Bool = true
     var selectedHouse: String?
+    var favoriteIDs: Set<String> = []
 
     private let fetchCharacters: FetchCharactersUseCase
     private let searchCharacters: SearchCharactersUseCase
+    private let favoritesStore: FavoritesStore
 
     init(
         fetchCharacters: FetchCharactersUseCase,
-        searchCharacters: SearchCharactersUseCase
+        searchCharacters: SearchCharactersUseCase,
+        favoritesStore: FavoritesStore
     ) {
         self.fetchCharacters = fetchCharacters
         self.searchCharacters = searchCharacters
+        self.favoritesStore = favoritesStore
+        self.favoriteIDs = favoritesStore.favorites(of: .character)
     }
 
     func onAppear() {
@@ -41,6 +46,11 @@ final class CharactersViewModel {
     func loadMoreIfNeeded(current item: Character) {
         guard let last = characters.last, last.id == item.id else { return }
         Task { await loadNextPage() }
+    }
+
+    func toggleFavorite(id: String) {
+        favoritesStore.toggleFavorite(id: id, type: .character)
+        favoriteIDs = favoritesStore.favorites(of: .character)
     }
 
     func retry() {

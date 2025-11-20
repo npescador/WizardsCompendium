@@ -16,9 +16,11 @@ struct ContentView: View {
         let repository = RemoteCharactersRepository(client: client)
         let fetch = DefaultFetchCharactersUseCase(repo: repository)
         let search = DefaultSearchCharactersUseCase(repo: repository)
+        let favorites = UserDefaultsFavoritesStore()
         self.viewModel = CharactersViewModel(
             fetchCharacters: fetch,
-            searchCharacters: search
+            searchCharacters: search,
+            favoritesStore: favorites
         )
         self.repository = repository
     }
@@ -32,7 +34,8 @@ struct ContentView: View {
     CharactersView(
         viewModel: CharactersViewModel(
             fetchCharacters: PreviewCharactersRepository(),
-            searchCharacters: PreviewCharactersRepository()
+            searchCharacters: PreviewCharactersRepository(),
+            favoritesStore: UserDefaultsFavoritesStore()
         ),
         repository: PreviewCharactersRepository()
     )

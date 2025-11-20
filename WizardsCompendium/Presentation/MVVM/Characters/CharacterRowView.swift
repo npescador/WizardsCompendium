@@ -2,6 +2,8 @@ import SwiftUI
 
 struct CharacterRowView: View {
     let character: Character
+    let isFavorite: Bool
+    let onToggleFavorite: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -19,6 +21,10 @@ struct CharacterRowView: View {
                 }
             }
             Spacer()
+            Button(action: onToggleFavorite) {
+                Image(systemName: isFavorite ? "star.fill" : "star")
+                    .foregroundStyle(isFavorite ? .yellow : .secondary)
+            }
         }
         .padding(.vertical, 6)
     }

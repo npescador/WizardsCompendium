@@ -90,10 +90,16 @@ struct CharactersView: View {
                             character: character,
                             fetchDetail: DefaultFetchCharacterDetailUseCase(
                                 repo: repository
-                            )
+                            ),
+                            isFavorite: viewModel.favoriteIDs.contains(character.id),
+                            onToggleFavorite: { viewModel.toggleFavorite(id: character.id) }
                         )
                     } label: {
-                        CharacterRowView(character: character)
+                        CharacterRowView(
+                            character: character,
+                            isFavorite: viewModel.favoriteIDs.contains(character.id),
+                            onToggleFavorite: { viewModel.toggleFavorite(id: character.id) }
+                        )
                     }
                     .onAppear {
                         viewModel.loadMoreIfNeeded(current: character)

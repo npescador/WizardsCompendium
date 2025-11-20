@@ -3,10 +3,14 @@ import SwiftUI
 struct CharacterDetailView: View {
     let initialCharacter: Character
     @State private var viewModel: CharacterDetailViewModel
+    var isFavorite: Bool
+    var onToggleFavorite: () -> Void
 
-    init(character: Character, fetchDetail: FetchCharacterDetailUseCase) {
+    init(character: Character, fetchDetail: FetchCharacterDetailUseCase, isFavorite: Bool, onToggleFavorite: @escaping () -> Void) {
         self.initialCharacter = character
         _viewModel = State(initialValue: CharacterDetailViewModel(characterID: character.id, fetchDetail: fetchDetail))
+        self.isFavorite = isFavorite
+        self.onToggleFavorite = onToggleFavorite
     }
 
     var body: some View {
@@ -18,6 +22,11 @@ struct CharacterDetailView: View {
             .padding()
         }
         .navigationTitle(displayName)
+        .toolbar {
+            Button(action: onToggleFavorite) {
+                Image(systemName: isFavorite ? "star.fill" : "star")
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
         .task {
             viewModel.load()
