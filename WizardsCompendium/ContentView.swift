@@ -8,37 +8,159 @@
 import SwiftUI
 
 struct ContentView: View {
-    private let viewModel: CharactersViewModel
-    private let repository: CharactersRepository
+    @State private var charactersViewModel: CharactersViewModel
+    @State private var spellsViewModel: SpellsViewModel
+    @State private var searchViewModel: AlohomoraViewModel
+
+    private let charactersRepository: CharactersRepository
+    private let spellsRepository: SpellsRepository
+    private let moviesRepository: MoviesRepository
+    private let booksRepository: BooksRepository
+    private let favoritesStore: FavoritesStore
 
     init() {
         let client = PotterDBClient()
-        let repository = RemoteCharactersRepository(client: client)
-        let fetch = DefaultFetchCharactersUseCase(repo: repository)
-        let search = DefaultSearchCharactersUseCase(repo: repository)
         let favorites = UserDefaultsFavoritesStore()
-        self.viewModel = CharactersViewModel(
-            fetchCharacters: fetch,
-            searchCharacters: search,
+
+        let charactersRepository = RemoteCharactersRepository(client: client)
+        let fetchCharacters = DefaultFetchCharactersUseCase(repo: charactersRepository)
+        let searchCharacters = DefaultSearchCharactersUseCase(repo: charactersRepository)
+        _charactersViewModel = State(initialValue: CharactersViewModel(
+            fetchCharacters: fetchCharacters,
+            searchCharacters: searchCharacters,
             favoritesStore: favorites
-        )
-        self.repository = repository
+        ))
+
+        let spellsRepository = RemoteSpellsRepository(client: client)
+        let fetchSpells = DefaultFetchSpellsUseCase(repo: spellsRepository)
+        let searchSpells = DefaultSearchSpellsUseCase(repo: spellsRepository)
+        _spellsViewModel = State(initialValue: SpellsViewModel(
+            fetchSpells: fetchSpells,
+            searchSpells: searchSpells,
+            favoritesStore: favorites
+        ))
+
+        let moviesRepository = RemoteMoviesRepository(client: client)
+        let searchMovies = DefaultSearchMoviesUseCase(repo: moviesRepository)
+
+        let booksRepository = RemoteBooksRepository(client: client)
+        let searchBooks = DefaultSearchBooksUseCase(repo: booksRepository)
+        _searchViewModel = State(initialValue: AlohomoraViewModel(
+            characters: searchCharacters,
+            spells: searchSpells,
+            movies: searchMovies,
+            books: searchBooks
+        ))
+
+        self.charactersRepository = charactersRepository
+        self.spellsRepository = spellsRepository
+        self.moviesRepository = moviesRepository
+        self.booksRepository = booksRepository
+        self.favoritesStore = favorites
     }
 
     var body: some View {
-        CharactersView(viewModel: viewModel, repository: repository)
+        TabView {
+            NavigationStack {
+                CharactersView(viewModel: charactersViewModel, repository: charactersRepository)
+            }
+            .tabItem {
+                Label("Personajes", systemImage: "person.3.fill")
+            }
+
+            NavigationStack {
+                SpellsView(viewModel: spellsViewModel, repository: spellsRepository)
+            }
+            .tabItem {
+                Label("Hechizos", systemImage: "wand.and.stars")
+            }
+
+            NavigationStack {
+                FavoritesTabView(
+                    viewModel: charactersViewModel,
+                    repository: charactersRepository
+                )
+            }
+            .tabItem {
+                Label("Favoritos", systemImage: "star.fill")
+            }
+
+            NavigationStack {
+                AlohomoraView(
+                    viewModel: searchViewModel,
+                    dependencies: AlohomoraDependencies(
+                        charactersRepo: charactersRepository,
+                        spellsRepo: spellsRepository,
+                        moviesRepo: moviesRepository,
+                        booksRepo: booksRepository,
+                        favoritesStore: favoritesStore
+                    )
+                )
+            }
+            .tabItem {
+                Label("Alohomora", systemImage: "sparkle.magnifyingglass")
+            }
+        }
     }
 }
 
 #Preview {
-    CharactersView(
-        viewModel: CharactersViewModel(
-            fetchCharacters: PreviewCharactersRepository(),
-            searchCharacters: PreviewCharactersRepository(),
-            favoritesStore: UserDefaultsFavoritesStore()
-        ),
-        repository: PreviewCharactersRepository()
-    )
+    TabView {
+        NavigationStack {
+            CharactersView(
+                viewModel: CharactersViewModel(
+                    fetchCharacters: PreviewCharactersRepository(),
+                    searchCharacters: PreviewCharactersRepository(),
+                    favoritesStore: UserDefaultsFavoritesStore()
+                ),
+                repository: PreviewCharactersRepository()
+            )
+        }
+        .tabItem { Label("Personajes", systemImage: "person.3.fill") }
+
+        NavigationStack {
+            SpellsView(
+                viewModel: SpellsViewModel(
+                    fetchSpells: PreviewSpellsRepository(),
+                    searchSpells: PreviewSpellsRepository(),
+                    favoritesStore: UserDefaultsFavoritesStore()
+                ),
+                repository: PreviewSpellsRepository()
+            )
+        }
+        .tabItem { Label("Hechizos", systemImage: "wand.and.stars") }
+
+        NavigationStack {
+            FavoritesTabView(
+                viewModel: CharactersViewModel(
+                    fetchCharacters: PreviewCharactersRepository(),
+                    searchCharacters: PreviewCharactersRepository(),
+                    favoritesStore: UserDefaultsFavoritesStore()
+                ),
+                repository: PreviewCharactersRepository()
+            )
+        }
+        .tabItem { Label("Favoritos", systemImage: "star.fill") }
+
+        NavigationStack {
+            AlohomoraView(
+                viewModel: AlohomoraViewModel(
+                    characters: PreviewCharactersRepository(),
+                    spells: PreviewSpellsRepository(),
+                    movies: PreviewMoviesRepository(),
+                    books: PreviewBooksRepository()
+                ),
+                dependencies: AlohomoraDependencies(
+                    charactersRepo: PreviewCharactersRepository(),
+                    spellsRepo: PreviewSpellsRepository(),
+                    moviesRepo: PreviewMoviesRepository(),
+                    booksRepo: PreviewBooksRepository(),
+                    favoritesStore: UserDefaultsFavoritesStore()
+                )
+            )
+        }
+        .tabItem { Label("Alohomora", systemImage: "sparkle.magnifyingglass") }
+    }
 }
 
 private final class PreviewCharactersRepository: CharactersRepository, FetchCharactersUseCase, SearchCharactersUseCase {
@@ -72,6 +194,79 @@ private final class PreviewCharactersRepository: CharactersRepository, FetchChar
             titles: [],
             jobs: ["Minister for Magic"],
             romances: ["Ron Weasley"],
+            wikiURL: nil
+        )
+    ]
+}
+
+private final class PreviewSpellsRepository: SpellsRepository, FetchSpellsUseCase, SearchSpellsUseCase, FetchSpellDetailUseCase {
+    func execute(page: Int) async throws -> [Spell] { try await fetchSpells(page: page) }
+    func execute(query: String, page: Int) async throws -> [Spell] { try await searchSpells(query: query, page: page) }
+    func execute(idOrSlug: String) async throws -> Spell { try await fetchSpellDetail(idOrSlug: idOrSlug) }
+
+    func fetchSpells(page: Int) async throws -> [Spell] { Self.sample }
+    func searchSpells(query: String, page: Int) async throws -> [Spell] {
+        Self.sample.filter { $0.name.lowercased().contains(query.lowercased()) }
+    }
+    func fetchSpellDetail(idOrSlug: String) async throws -> Spell { Self.sample[0] }
+
+    private static let sample: [Spell] = [
+        Spell(
+            id: "sp1",
+            name: "Expelliarmus",
+            incantation: "Expelliarmus",
+            effect: "Desarma al oponente",
+            category: "Charm",
+            light: "Rojo",
+            imageURL: nil,
+            wikiURL: nil
+        ),
+        Spell(
+            id: "sp2",
+            name: "Lumos",
+            incantation: "Lumos",
+            effect: "Ilumina la varita",
+            category: "Charm",
+            light: "Blanco",
+            imageURL: nil,
+            wikiURL: nil
+        )
+    ]
+}
+
+private final class PreviewMoviesRepository: MoviesRepository, SearchMoviesUseCase {
+    func execute(query: String, page: Int) async throws -> [Movie] { try await searchMovies(query: query, page: page) }
+
+    func fetchMovies(page: Int) async throws -> [Movie] { Self.sample }
+    func searchMovies(query: String, page: Int) async throws -> [Movie] { Self.sample }
+    func fetchMovieDetail(idOrSlug: String) async throws -> Movie { Self.sample[0] }
+
+    private static let sample: [Movie] = [
+        Movie(
+            id: "m1",
+            title: "Harry Potter and the Philosopher's Stone",
+            releaseDate: nil,
+            summary: nil,
+            posterURL: nil,
+            wikiURL: nil
+        )
+    ]
+}
+
+private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase {
+    func execute(query: String, page: Int) async throws -> [Book] { try await searchBooks(query: query, page: page) }
+
+    func fetchBooks(page: Int) async throws -> [Book] { Self.sample }
+    func searchBooks(query: String, page: Int) async throws -> [Book] { Self.sample }
+    func fetchBookDetail(idOrSlug: String) async throws -> Book { Self.sample[0] }
+
+    private static let sample: [Book] = [
+        Book(
+            id: "b1",
+            title: "Harry Potter and the Chamber of Secrets",
+            releaseDate: nil,
+            summary: nil,
+            coverURL: nil,
             wikiURL: nil
         )
     ]

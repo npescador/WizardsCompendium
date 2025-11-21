@@ -1,14 +1,14 @@
 import SwiftUI
 
-struct CharacterDetailView: View {
-    let initialCharacter: Character
-    @State private var viewModel: CharacterDetailViewModel
+struct SpellDetailView: View {
+    let initialSpell: Spell
+    @State private var viewModel: SpellDetailViewModel
     @State private var isFavorite: Bool
     var onToggleFavorite: () -> Void
 
-    init(character: Character, fetchDetail: FetchCharacterDetailUseCase, isFavorite: Bool, onToggleFavorite: @escaping () -> Void) {
-        self.initialCharacter = character
-        _viewModel = State(initialValue: CharacterDetailViewModel(characterID: character.id, fetchDetail: fetchDetail))
+    init(spell: Spell, fetchDetail: FetchSpellDetailUseCase, isFavorite: Bool, onToggleFavorite: @escaping () -> Void) {
+        self.initialSpell = spell
+        _viewModel = State(initialValue: SpellDetailViewModel(spellID: spell.id, fetchDetail: fetchDetail))
         _isFavorite = State(initialValue: isFavorite)
         self.onToggleFavorite = onToggleFavorite
     }
@@ -38,19 +38,19 @@ struct CharacterDetailView: View {
 
     private var displayName: String {
         switch viewModel.state {
-        case .loaded(let character):
-            return character.name
+        case .loaded(let spell):
+            return spell.name
         default:
-            return initialCharacter.name
+            return initialSpell.name
         }
     }
 
     private var header: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 16)
-                .fill(.brown.opacity(0.2))
+                .fill(.indigo.opacity(0.2))
                 .frame(height: 180)
-            Image(systemName: "wand.and.stars")
+            Image(systemName: "sparkles")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
         }
@@ -69,32 +69,26 @@ struct CharacterDetailView: View {
                 Button("Reintentar") { viewModel.retry() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        case .loaded(let character):
-            infoSection(character)
+        case .loaded(let spell):
+            infoSection(spell)
         }
     }
 
-    private func infoSection(_ character: Character) -> some View {
+    private func infoSection(_ spell: Spell) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            if let house = character.house {
-                labeled("Casa", value: house)
+            if let incantation = spell.incantation {
+                labeled("Incantation", value: incantation)
             }
-            if let species = character.species {
-                labeled("Especie", value: species)
+            if let effect = spell.effect {
+                labeled("Efecto", value: effect)
             }
-            if let patronus = character.patronus {
-                labeled("Patronus", value: patronus)
+            if let category = spell.category {
+                labeled("Categoría", value: category)
             }
-            if !character.titles.isEmpty {
-                labeled("Títulos", value: character.titles.joined(separator: ", "))
+            if let light = spell.light {
+                labeled("Luz", value: light)
             }
-            if !character.jobs.isEmpty {
-                labeled("Trabajos", value: character.jobs.joined(separator: ", "))
-            }
-            if !character.romances.isEmpty {
-                labeled("Romances", value: character.romances.joined(separator: ", "))
-            }
-            if let wiki = character.wikiURL {
+            if let wiki = spell.wikiURL {
                 Link("Ver en Wiki", destination: wiki)
                     .font(.headline)
                     .padding(.top, 6)
