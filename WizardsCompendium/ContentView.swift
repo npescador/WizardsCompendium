@@ -13,6 +13,9 @@ struct ContentView: View {
     @State private var searchViewModel: AlohomoraViewModel
     @State private var favoritesViewModel: FavoritesTabViewModel
     @State private var favoritesCoordinator: FavoritesCoordinator
+    @State private var libraryCoordinator: LibraryCoordinator
+    @State private var moviesViewModel: MoviesViewModel
+    @State private var booksViewModel: BooksViewModel
 
     private let charactersRepository: CharactersRepository
     private let spellsRepository: SpellsRepository
@@ -69,6 +72,20 @@ struct ContentView: View {
                 fetchBookDetail: DefaultFetchBookDetailUseCase(repo: booksRepository)
             )
         ))
+        _libraryCoordinator = State(initialValue: LibraryCoordinator(
+            dependencies: LibraryDetailDependencies(
+                fetchMovieDetail: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
+                fetchBookDetail: DefaultFetchBookDetailUseCase(repo: booksRepository)
+            )
+        ))
+        _moviesViewModel = State(initialValue: MoviesViewModel(
+            fetchMovies: DefaultFetchMoviesUseCase(repo: moviesRepository),
+            searchMovies: DefaultSearchMoviesUseCase(repo: moviesRepository)
+        ))
+        _booksViewModel = State(initialValue: BooksViewModel(
+            fetchBooks: DefaultFetchBooksUseCase(repo: booksRepository),
+            searchBooks: DefaultSearchBooksUseCase(repo: booksRepository)
+        ))
 
         self.charactersRepository = charactersRepository
         self.spellsRepository = spellsRepository
@@ -115,6 +132,15 @@ struct ContentView: View {
             }
             .tabItem {
                 Label("Alohomora", systemImage: "sparkle.magnifyingglass")
+            }
+
+            LibraryView(
+                coordinator: libraryCoordinator,
+                moviesViewModel: moviesViewModel,
+                booksViewModel: booksViewModel
+            )
+            .tabItem {
+                Label("Biblioteca", systemImage: "books.vertical")
             }
         }
     }
@@ -191,6 +217,24 @@ struct ContentView: View {
             )
         }
         .tabItem { Label("Alohomora", systemImage: "sparkle.magnifyingglass") }
+
+        LibraryView(
+            coordinator: LibraryCoordinator(
+                dependencies: LibraryDetailDependencies(
+                    fetchMovieDetail: PreviewMoviesRepository(),
+                    fetchBookDetail: PreviewBooksRepository()
+                )
+            ),
+            moviesViewModel: MoviesViewModel(
+                fetchMovies: PreviewMoviesRepository(),
+                searchMovies: PreviewMoviesRepository()
+            ),
+            booksViewModel: BooksViewModel(
+                fetchBooks: PreviewBooksRepository(),
+                searchBooks: PreviewBooksRepository()
+            )
+        )
+        .tabItem { Label("Biblioteca", systemImage: "books.vertical") }
     }
 }
 
