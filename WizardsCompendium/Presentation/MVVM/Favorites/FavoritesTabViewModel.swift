@@ -17,19 +17,31 @@ final class FavoritesTabViewModel {
     private let fetchSpell: FetchSpellDetailUseCase
     private let fetchMovie: FetchMovieDetailUseCase
     private let fetchBook: FetchBookDetailUseCase
+    private let cachedCharacters: () -> [Character]
+    private let cachedSpells: () -> [Spell]
+    private let cachedMovies: () -> [Movie]
+    private let cachedBooks: () -> [Book]
 
     init(
         favoritesStore: FavoritesStore,
         fetchCharacter: FetchCharacterDetailUseCase,
         fetchSpell: FetchSpellDetailUseCase,
         fetchMovie: FetchMovieDetailUseCase,
-        fetchBook: FetchBookDetailUseCase
+        fetchBook: FetchBookDetailUseCase,
+        cachedCharacters: @escaping () -> [Character],
+        cachedSpells: @escaping () -> [Spell],
+        cachedMovies: @escaping () -> [Movie],
+        cachedBooks: @escaping () -> [Book]
     ) {
         self.favoritesStore = favoritesStore
         self.fetchCharacter = fetchCharacter
         self.fetchSpell = fetchSpell
         self.fetchMovie = fetchMovie
         self.fetchBook = fetchBook
+        self.cachedCharacters = cachedCharacters
+        self.cachedSpells = cachedSpells
+        self.cachedMovies = cachedMovies
+        self.cachedBooks = cachedBooks
     }
 
     func onAppear() {
@@ -55,20 +67,44 @@ final class FavoritesTabViewModel {
         let movieIDs = favoritesStore.favorites(of: .movie)
         let bookIDs = favoritesStore.favorites(of: .book)
 
-        async let charactersResult = fetchCharacters(ids: characterIDs)
-        async let spellsResult = fetchSpells(ids: spellIDs)
-        async let moviesResult = fetchMovies(ids: movieIDs)
-        async let booksResult = fetchBooks(ids: bookIDs)
+        let cachedCharacters = cachedCharacters().filter { characterIDs.contains($0.id) }
+        let cachedCharacterIDs = Set(cachedCharacters.map(\.id))
+        let characterIDsToFetch = characterIDs.subtracting(cachedCharacterIDs)
+
+        let cachedSpells = cachedSpells().filter { spellIDs.contains($0.id) }
+        let cachedSpellIDs = Set(cachedSpells.map(\.id))
+        let spellIDsToFetch = spellIDs.subtracting(cachedSpellIDs)
+
+        let cachedMovies = cachedMovies().filter { movieIDs.contains($0.id) }
+        let cachedMovieIDs = Set(cachedMovies.map(\.id))
+        let movieIDsToFetch = movieIDs.subtracting(cachedMovieIDs)
+
+        let cachedBooks = cachedBooks().filter { bookIDs.contains($0.id) }
+        let cachedBookIDs = Set(cachedBooks.map(\.id))
+        let bookIDsToFetch = bookIDs.subtracting(cachedBookIDs)
+
+        async let charactersResult = fetchCharacters(ids: characterIDsToFetch)
+        async let spellsResult = fetchSpells(ids: spellIDsToFetch)
+        async let moviesResult = fetchMovies(ids: movieIDsToFetch)
+        async let booksResult = fetchBooks(ids: bookIDsToFetch)
 
         let allCharacters = await charactersResult
         let allSpells = await spellsResult
         let allMovies = await moviesResult
         let allBooks = await booksResult
 
-        self.characters = allCharacters.items.sorted { $0.name < $1.name }
-        self.spells = allSpells.items.sorted { $0.name < $1.name }
-        self.movies = allMovies.items.sorted { $0.title < $1.title }
-        self.books = allBooks.items.sorted { $0.title < $1.title }
+        self.characters = (cachedCharacters + allCharacters.items)
+            .reduce(into: [String: Character]()) { dict, item in dict[item.id] = item }
+            .values.sorted { $0.name < $1.name }
+        self.spells = (cachedSpells + allSpells.items)
+            .reduce(into: [String: Spell]()) { dict, item in dict[item.id] = item }
+            .values.sorted { $0.name < $1.name }
+        self.movies = (cachedMovies + allMovies.items)
+            .reduce(into: [String: Movie]()) { dict, item in dict[item.id] = item }
+            .values.sorted { $0.title < $1.title }
+        self.books = (cachedBooks + allBooks.items)
+            .reduce(into: [String: Book]()) { dict, item in dict[item.id] = item }
+            .values.sorted { $0.title < $1.title }
 
         let failures = allCharacters.failures + allSpells.failures + allMovies.failures + allBooks.failures
         let successes = characters.count + spells.count + movies.count + books.count

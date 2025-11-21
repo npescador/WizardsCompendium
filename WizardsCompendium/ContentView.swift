@@ -57,12 +57,24 @@ struct ContentView: View {
             books: searchBooks
         ))
 
+        _moviesViewModel = State(initialValue: MoviesViewModel(
+            fetchMovies: DefaultFetchMoviesUseCase(repo: moviesRepository),
+            searchMovies: DefaultSearchMoviesUseCase(repo: moviesRepository)
+        ))
+        _booksViewModel = State(initialValue: BooksViewModel(
+            fetchBooks: DefaultFetchBooksUseCase(repo: booksRepository),
+            searchBooks: DefaultSearchBooksUseCase(repo: booksRepository)
+        ))
         _favoritesViewModel = State(initialValue: FavoritesTabViewModel(
             favoritesStore: favorites,
             fetchCharacter: DefaultFetchCharacterDetailUseCase(repo: charactersRepository),
             fetchSpell: DefaultFetchSpellDetailUseCase(repo: spellsRepository),
             fetchMovie: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
-            fetchBook: DefaultFetchBookDetailUseCase(repo: booksRepository)
+            fetchBook: DefaultFetchBookDetailUseCase(repo: booksRepository),
+            cachedCharacters: { charactersViewModel.characters },
+            cachedSpells: { spellsViewModel.spells },
+            cachedMovies: { moviesViewModel.movies },
+            cachedBooks: { booksViewModel.books }
         ))
         _favoritesCoordinator = State(initialValue: FavoritesCoordinator(
             dependencies: FavoritesDetailDependencies(
@@ -77,14 +89,6 @@ struct ContentView: View {
                 fetchMovieDetail: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
                 fetchBookDetail: DefaultFetchBookDetailUseCase(repo: booksRepository)
             )
-        ))
-        _moviesViewModel = State(initialValue: MoviesViewModel(
-            fetchMovies: DefaultFetchMoviesUseCase(repo: moviesRepository),
-            searchMovies: DefaultSearchMoviesUseCase(repo: moviesRepository)
-        ))
-        _booksViewModel = State(initialValue: BooksViewModel(
-            fetchBooks: DefaultFetchBooksUseCase(repo: booksRepository),
-            searchBooks: DefaultSearchBooksUseCase(repo: booksRepository)
         ))
 
         self.charactersRepository = charactersRepository
@@ -186,7 +190,11 @@ struct ContentView: View {
                 fetchCharacter: PreviewCharactersRepository(),
                 fetchSpell: PreviewSpellsRepository(),
                 fetchMovie: PreviewMoviesRepository(),
-                fetchBook: PreviewBooksRepository()
+                fetchBook: PreviewBooksRepository(),
+                cachedCharacters: { PreviewCharactersRepository.sample },
+                cachedSpells: { PreviewSpellsRepository.sample },
+                cachedMovies: { PreviewMoviesRepository.sample },
+                cachedBooks: { PreviewBooksRepository.sample }
             ),
             coordinator: FavoritesCoordinator(
                 dependencies: FavoritesDetailDependencies(
@@ -247,7 +255,7 @@ private final class PreviewCharactersRepository: CharactersRepository, FetchChar
     func searchCharacters(query: String, page: Int, house: String?) async throws -> [Character] { Self.sample.filter { $0.name.lowercased().contains(query.lowercased()) } }
     func fetchCharacterDetail(idOrSlug: String) async throws -> Character { Self.sample[0] }
 
-    private static let sample: [Character] = [
+    static let sample: [Character] = [
         Character(
             id: "1",
             name: "Harry Potter",
@@ -286,7 +294,7 @@ private final class PreviewSpellsRepository: SpellsRepository, FetchSpellsUseCas
     }
     func fetchSpellDetail(idOrSlug: String) async throws -> Spell { Self.sample[0] }
 
-    private static let sample: [Spell] = [
+    static let sample: [Spell] = [
         Spell(
             id: "sp1",
             name: "Expelliarmus",
@@ -319,7 +327,7 @@ private final class PreviewMoviesRepository: MoviesRepository, FetchMoviesUseCas
     func searchMovies(query: String, page: Int) async throws -> [Movie] { Self.sample }
     func fetchMovieDetail(idOrSlug: String) async throws -> Movie { Self.sample[0] }
 
-    private static let sample: [Movie] = [
+    static let sample: [Movie] = [
         Movie(
             id: "m1",
             title: "Harry Potter and the Philosopher's Stone",
@@ -340,7 +348,7 @@ private final class PreviewBooksRepository: BooksRepository, FetchBooksUseCase, 
     func searchBooks(query: String, page: Int) async throws -> [Book] { Self.sample }
     func fetchBookDetail(idOrSlug: String) async throws -> Book { Self.sample[0] }
 
-    private static let sample: [Book] = [
+    static let sample: [Book] = [
         Book(
             id: "b1",
             title: "Harry Potter and the Chamber of Secrets",
