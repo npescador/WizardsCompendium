@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var charactersViewModel: CharactersViewModel
     @State private var spellsViewModel: SpellsViewModel
     @State private var searchViewModel: AlohomoraViewModel
+    @State private var favoritesViewModel: FavoritesTabViewModel
 
     private let charactersRepository: CharactersRepository
     private let spellsRepository: SpellsRepository
@@ -52,6 +53,14 @@ struct ContentView: View {
             books: searchBooks
         ))
 
+        _favoritesViewModel = State(initialValue: FavoritesTabViewModel(
+            favoritesStore: favorites,
+            fetchCharacter: DefaultFetchCharacterDetailUseCase(repo: charactersRepository),
+            fetchSpell: DefaultFetchSpellDetailUseCase(repo: spellsRepository),
+            fetchMovie: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
+            fetchBook: DefaultFetchBookDetailUseCase(repo: booksRepository)
+        ))
+
         self.charactersRepository = charactersRepository
         self.spellsRepository = spellsRepository
         self.moviesRepository = moviesRepository
@@ -77,8 +86,11 @@ struct ContentView: View {
 
             NavigationStack {
                 FavoritesTabView(
-                    viewModel: charactersViewModel,
-                    repository: charactersRepository
+                    viewModel: favoritesViewModel,
+                    charactersRepo: charactersRepository,
+                    spellsRepo: spellsRepository,
+                    moviesRepo: moviesRepository,
+                    booksRepo: booksRepository
                 )
             }
             .tabItem {
@@ -104,14 +116,22 @@ struct ContentView: View {
     }
 }
 
+#if DEBUG
 #Preview {
+    let favoritesStore = PreviewFavoritesStore(
+        characterIDs: ["1"],
+        spellIDs: ["sp1"],
+        movieIDs: ["m1"],
+        bookIDs: ["b1"]
+    )
+
     TabView {
         NavigationStack {
             CharactersView(
                 viewModel: CharactersViewModel(
                     fetchCharacters: PreviewCharactersRepository(),
                     searchCharacters: PreviewCharactersRepository(),
-                    favoritesStore: UserDefaultsFavoritesStore()
+                    favoritesStore: favoritesStore
                 ),
                 repository: PreviewCharactersRepository()
             )
@@ -123,7 +143,7 @@ struct ContentView: View {
                 viewModel: SpellsViewModel(
                     fetchSpells: PreviewSpellsRepository(),
                     searchSpells: PreviewSpellsRepository(),
-                    favoritesStore: UserDefaultsFavoritesStore()
+                    favoritesStore: favoritesStore
                 ),
                 repository: PreviewSpellsRepository()
             )
@@ -132,12 +152,17 @@ struct ContentView: View {
 
         NavigationStack {
             FavoritesTabView(
-                viewModel: CharactersViewModel(
-                    fetchCharacters: PreviewCharactersRepository(),
-                    searchCharacters: PreviewCharactersRepository(),
-                    favoritesStore: UserDefaultsFavoritesStore()
+                viewModel: FavoritesTabViewModel(
+                    favoritesStore: favoritesStore,
+                    fetchCharacter: PreviewCharactersRepository(),
+                    fetchSpell: PreviewSpellsRepository(),
+                    fetchMovie: PreviewMoviesRepository(),
+                    fetchBook: PreviewBooksRepository()
                 ),
-                repository: PreviewCharactersRepository()
+                charactersRepo: PreviewCharactersRepository(),
+                spellsRepo: PreviewSpellsRepository(),
+                moviesRepo: PreviewMoviesRepository(),
+                booksRepo: PreviewBooksRepository()
             )
         }
         .tabItem { Label("Favoritos", systemImage: "star.fill") }
@@ -155,7 +180,7 @@ struct ContentView: View {
                     spellsRepo: PreviewSpellsRepository(),
                     moviesRepo: PreviewMoviesRepository(),
                     booksRepo: PreviewBooksRepository(),
-                    favoritesStore: UserDefaultsFavoritesStore()
+                    favoritesStore: favoritesStore
                 )
             )
         }
@@ -271,3 +296,53 @@ private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase 
         )
     ]
 }
+
+private final class PreviewFavoritesStore: FavoritesStore {
+    private var characterIDs: Set<String>
+    private var spellIDs: Set<String>
+    private var movieIDs: Set<String>
+    private var bookIDs: Set<String>
+
+    init(
+        characterIDs: Set<String> = [],
+        spellIDs: Set<String> = [],
+        movieIDs: Set<String> = [],
+        bookIDs: Set<String> = []
+    ) {
+        self.characterIDs = characterIDs
+        self.spellIDs = spellIDs
+        self.movieIDs = movieIDs
+        self.bookIDs = bookIDs
+    }
+
+    func toggleFavorite(id: String, type: FavoriteType) {
+        switch type {
+        case .character: toggle(&characterIDs, id: id)
+        case .spell: toggle(&spellIDs, id: id)
+        case .movie: toggle(&movieIDs, id: id)
+        case .book: toggle(&bookIDs, id: id)
+        }
+    }
+
+    func isFavorite(id: String, type: FavoriteType) -> Bool {
+        favorites(of: type).contains(id)
+    }
+
+    func favorites(of type: FavoriteType) -> Set<String> {
+        switch type {
+        case .character: return characterIDs
+        case .spell: return spellIDs
+        case .movie: return movieIDs
+        case .book: return bookIDs
+        }
+    }
+
+    private func toggle(_ set: inout Set<String>, id: String) {
+        if set.contains(id) {
+            set.remove(id)
+        } else {
+            set.insert(id)
+        }
+    }
+}
+#endif

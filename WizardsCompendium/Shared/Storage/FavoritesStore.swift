@@ -9,6 +9,8 @@ protocol FavoritesStore {
 enum FavoriteType: String {
     case character
     case spell
+    case movie
+    case book
 }
 
 final class UserDefaultsFavoritesStore: FavoritesStore {
