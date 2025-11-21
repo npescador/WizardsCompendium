@@ -194,9 +194,10 @@ struct ContentView: View {
     }
 }
 
-private final class PreviewCharactersRepository: CharactersRepository, FetchCharactersUseCase, SearchCharactersUseCase {
+private final class PreviewCharactersRepository: CharactersRepository, FetchCharactersUseCase, SearchCharactersUseCase, FetchCharacterDetailUseCase {
     func execute(page: Int, house: String?) async throws -> [Character] { try await fetchCharacters(page: page, house: house) }
     func execute(query: String, page: Int, house: String?) async throws -> [Character] { try await searchCharacters(query: query, page: page, house: house) }
+    func execute(idOrSlug: String) async throws -> Character { try await fetchCharacterDetail(idOrSlug: idOrSlug) }
 
     func fetchCharacters(page: Int, house: String?) async throws -> [Character] { Self.sample }
     func searchCharacters(query: String, page: Int, house: String?) async throws -> [Character] { Self.sample.filter { $0.name.lowercased().contains(query.lowercased()) } }
@@ -265,8 +266,9 @@ private final class PreviewSpellsRepository: SpellsRepository, FetchSpellsUseCas
     ]
 }
 
-private final class PreviewMoviesRepository: MoviesRepository, SearchMoviesUseCase {
+private final class PreviewMoviesRepository: MoviesRepository, SearchMoviesUseCase, FetchMovieDetailUseCase {
     func execute(query: String, page: Int) async throws -> [Movie] { try await searchMovies(query: query, page: page) }
+    func execute(idOrSlug: String) async throws -> Movie { try await fetchMovieDetail(idOrSlug: idOrSlug) }
 
     func fetchMovies(page: Int) async throws -> [Movie] { Self.sample }
     func searchMovies(query: String, page: Int) async throws -> [Movie] { Self.sample }
@@ -284,8 +286,9 @@ private final class PreviewMoviesRepository: MoviesRepository, SearchMoviesUseCa
     ]
 }
 
-private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase {
+private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase, FetchBookDetailUseCase {
     func execute(query: String, page: Int) async throws -> [Book] { try await searchBooks(query: query, page: page) }
+    func execute(idOrSlug: String) async throws -> Book { try await fetchBookDetail(idOrSlug: idOrSlug) }
 
     func fetchBooks(page: Int) async throws -> [Book] { Self.sample }
     func searchBooks(query: String, page: Int) async throws -> [Book] { Self.sample }
@@ -303,7 +306,6 @@ private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase 
     ]
 }
 
-#if DEBUG
 private final class PreviewFavoritesStore: FavoritesStore {
     private var characterIDs: Set<String>
     private var spellIDs: Set<String>
