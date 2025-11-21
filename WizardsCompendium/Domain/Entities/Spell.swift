@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Spell: Identifiable, Equatable, Sendable {
+public struct Spell: Identifiable, Equatable, Hashable, Sendable {
     public let id: String
     public let name: String
     public let incantation: String?
