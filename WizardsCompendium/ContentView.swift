@@ -310,7 +310,8 @@ private final class PreviewSpellsRepository: SpellsRepository, FetchSpellsUseCas
     ]
 }
 
-private final class PreviewMoviesRepository: MoviesRepository, SearchMoviesUseCase, FetchMovieDetailUseCase {
+private final class PreviewMoviesRepository: MoviesRepository, FetchMoviesUseCase, SearchMoviesUseCase, FetchMovieDetailUseCase {
+    func execute(page: Int) async throws -> [Movie] { try await fetchMovies(page: page) }
     func execute(query: String, page: Int) async throws -> [Movie] { try await searchMovies(query: query, page: page) }
     func execute(idOrSlug: String) async throws -> Movie { try await fetchMovieDetail(idOrSlug: idOrSlug) }
 
@@ -330,7 +331,8 @@ private final class PreviewMoviesRepository: MoviesRepository, SearchMoviesUseCa
     ]
 }
 
-private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase, FetchBookDetailUseCase {
+private final class PreviewBooksRepository: BooksRepository, FetchBooksUseCase, SearchBooksUseCase, FetchBookDetailUseCase {
+    func execute(page: Int) async throws -> [Book] { try await fetchBooks(page: page) }
     func execute(query: String, page: Int) async throws -> [Book] { try await searchBooks(query: query, page: page) }
     func execute(idOrSlug: String) async throws -> Book { try await fetchBookDetail(idOrSlug: idOrSlug) }
 
