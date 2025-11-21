@@ -145,7 +145,7 @@ struct FavoritesTabView: View {
     }
 }
 
-private struct MovieRowView: View {
+struct MovieRowView: View {
     let movie: Movie
 
     var body: some View {

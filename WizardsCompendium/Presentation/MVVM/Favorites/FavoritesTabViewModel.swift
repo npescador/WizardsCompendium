@@ -71,9 +71,14 @@ final class FavoritesTabViewModel {
         self.books = allBooks.items.sorted { $0.title < $1.title }
 
         let failures = allCharacters.failures + allSpells.failures + allMovies.failures + allBooks.failures
+        let successes = characters.count + spells.count + movies.count + books.count
+        let total = characterIDs.count + spellIDs.count + movieIDs.count + bookIDs.count
+
         lastFailedCount = failures
-        if failures > 0 {
-            errorMessage = "No se pudieron cargar \(failures) favoritos."
+        if failures == total && total > 0 {
+            errorMessage = "No se pudieron cargar tus favoritos. Reintenta."
+        } else {
+            errorMessage = nil
         }
     }
 
