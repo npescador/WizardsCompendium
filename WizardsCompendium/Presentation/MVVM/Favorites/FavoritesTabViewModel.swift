@@ -79,25 +79,25 @@ final class FavoritesTabViewModel {
 
     private func fetchCharacters(ids: Set<String>) async -> FavoritesResult<Character> {
         await fetchAll(ids: ids) { id in
-            try await fetchCharacter.execute(idOrSlug: id)
+            try await self.fetchCharacter.execute(idOrSlug: id)
         }
     }
 
     private func fetchSpells(ids: Set<String>) async -> FavoritesResult<Spell> {
         await fetchAll(ids: ids) { id in
-            try await fetchSpell.execute(idOrSlug: id)
+            try await self.fetchSpell.execute(idOrSlug: id)
         }
     }
 
     private func fetchMovies(ids: Set<String>) async -> FavoritesResult<Movie> {
         await fetchAll(ids: ids) { id in
-            try await fetchMovie.execute(idOrSlug: id)
+            try await self.fetchMovie.execute(idOrSlug: id)
         }
     }
 
     private func fetchBooks(ids: Set<String>) async -> FavoritesResult<Book> {
         await fetchAll(ids: ids) { id in
-            try await fetchBook.execute(idOrSlug: id)
+            try await self.fetchBook.execute(idOrSlug: id)
         }
     }
 
