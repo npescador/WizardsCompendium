@@ -30,26 +30,36 @@ struct ContentView: View {
         let charactersRepository = RemoteCharactersRepository(client: client)
         let fetchCharacters = DefaultFetchCharactersUseCase(repo: charactersRepository)
         let searchCharacters = DefaultSearchCharactersUseCase(repo: charactersRepository)
-        _charactersViewModel = State(initialValue: CharactersViewModel(
+        let charactersVM = CharactersViewModel(
             fetchCharacters: fetchCharacters,
             searchCharacters: searchCharacters,
             favoritesStore: favorites
-        ))
+        )
+        _charactersViewModel = State(initialValue: charactersVM)
 
         let spellsRepository = RemoteSpellsRepository(client: client)
         let fetchSpells = DefaultFetchSpellsUseCase(repo: spellsRepository)
         let searchSpells = DefaultSearchSpellsUseCase(repo: spellsRepository)
-        _spellsViewModel = State(initialValue: SpellsViewModel(
+        let spellsVM = SpellsViewModel(
             fetchSpells: fetchSpells,
             searchSpells: searchSpells,
             favoritesStore: favorites
-        ))
+        )
+        _spellsViewModel = State(initialValue: spellsVM)
 
         let moviesRepository = RemoteMoviesRepository(client: client)
         let searchMovies = DefaultSearchMoviesUseCase(repo: moviesRepository)
+        let moviesVM = MoviesViewModel(
+            fetchMovies: DefaultFetchMoviesUseCase(repo: moviesRepository),
+            searchMovies: searchMovies
+        )
 
         let booksRepository = RemoteBooksRepository(client: client)
         let searchBooks = DefaultSearchBooksUseCase(repo: booksRepository)
+        let booksVM = BooksViewModel(
+            fetchBooks: DefaultFetchBooksUseCase(repo: booksRepository),
+            searchBooks: searchBooks
+        )
         _searchViewModel = State(initialValue: AlohomoraViewModel(
             characters: searchCharacters,
             spells: searchSpells,
@@ -57,24 +67,18 @@ struct ContentView: View {
             books: searchBooks
         ))
 
-        _moviesViewModel = State(initialValue: MoviesViewModel(
-            fetchMovies: DefaultFetchMoviesUseCase(repo: moviesRepository),
-            searchMovies: DefaultSearchMoviesUseCase(repo: moviesRepository)
-        ))
-        _booksViewModel = State(initialValue: BooksViewModel(
-            fetchBooks: DefaultFetchBooksUseCase(repo: booksRepository),
-            searchBooks: DefaultSearchBooksUseCase(repo: booksRepository)
-        ))
+        _moviesViewModel = State(initialValue: moviesVM)
+        _booksViewModel = State(initialValue: booksVM)
         _favoritesViewModel = State(initialValue: FavoritesTabViewModel(
             favoritesStore: favorites,
             fetchCharacter: DefaultFetchCharacterDetailUseCase(repo: charactersRepository),
             fetchSpell: DefaultFetchSpellDetailUseCase(repo: spellsRepository),
             fetchMovie: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
             fetchBook: DefaultFetchBookDetailUseCase(repo: booksRepository),
-            cachedCharacters: { charactersViewModel.characters },
-            cachedSpells: { spellsViewModel.spells },
-            cachedMovies: { moviesViewModel.movies },
-            cachedBooks: { booksViewModel.books }
+            cachedCharacters: { charactersVM.characters },
+            cachedSpells: { spellsVM.spells },
+            cachedMovies: { moviesVM.movies },
+            cachedBooks: { booksVM.books }
         ))
         _favoritesCoordinator = State(initialValue: FavoritesCoordinator(
             dependencies: FavoritesDetailDependencies(
