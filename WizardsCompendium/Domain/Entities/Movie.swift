@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Movie: Identifiable, Equatable, Sendable {
+public struct Movie: Identifiable, Equatable, Hashable, Sendable {
     public let id: String
     public let title: String
     public let releaseDate: Date?

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Character: Identifiable, Equatable, Sendable {
+public struct Character: Identifiable, Equatable, Hashable, Sendable {
     public let id: String
     public let name: String
     public let house: String?

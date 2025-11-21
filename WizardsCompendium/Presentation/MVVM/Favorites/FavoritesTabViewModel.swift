@@ -10,6 +10,7 @@ final class FavoritesTabViewModel {
     var books: [Book] = []
     var isLoading = false
     var errorMessage: String?
+    var lastFailedCount: Int = 0
 
     private let favoritesStore: FavoritesStore
     private let fetchCharacter: FetchCharacterDetailUseCase
@@ -54,36 +55,47 @@ final class FavoritesTabViewModel {
         let movieIDs = favoritesStore.favorites(of: .movie)
         let bookIDs = favoritesStore.favorites(of: .book)
 
-        async let characters = fetchCharacters(ids: characterIDs)
-        async let spells = fetchSpells(ids: spellIDs)
-        async let movies = fetchMovies(ids: movieIDs)
-        async let books = fetchBooks(ids: bookIDs)
+        async let charactersResult = fetchCharacters(ids: characterIDs)
+        async let spellsResult = fetchSpells(ids: spellIDs)
+        async let moviesResult = fetchMovies(ids: movieIDs)
+        async let booksResult = fetchBooks(ids: bookIDs)
 
-        self.characters = await characters
-        self.spells = await spells
-        self.movies = await movies
-        self.books = await books
+        let allCharacters = await charactersResult
+        let allSpells = await spellsResult
+        let allMovies = await moviesResult
+        let allBooks = await booksResult
+
+        self.characters = allCharacters.items.sorted { $0.name < $1.name }
+        self.spells = allSpells.items.sorted { $0.name < $1.name }
+        self.movies = allMovies.items.sorted { $0.title < $1.title }
+        self.books = allBooks.items.sorted { $0.title < $1.title }
+
+        let failures = allCharacters.failures + allSpells.failures + allMovies.failures + allBooks.failures
+        lastFailedCount = failures
+        if failures > 0 {
+            errorMessage = "No se pudieron cargar \(failures) favoritos."
+        }
     }
 
-    private func fetchCharacters(ids: Set<String>) async -> [Character] {
+    private func fetchCharacters(ids: Set<String>) async -> FavoritesResult<Character> {
         await fetchAll(ids: ids) { id in
             try await fetchCharacter.execute(idOrSlug: id)
         }
     }
 
-    private func fetchSpells(ids: Set<String>) async -> [Spell] {
+    private func fetchSpells(ids: Set<String>) async -> FavoritesResult<Spell> {
         await fetchAll(ids: ids) { id in
             try await fetchSpell.execute(idOrSlug: id)
         }
     }
 
-    private func fetchMovies(ids: Set<String>) async -> [Movie] {
+    private func fetchMovies(ids: Set<String>) async -> FavoritesResult<Movie> {
         await fetchAll(ids: ids) { id in
             try await fetchMovie.execute(idOrSlug: id)
         }
     }
 
-    private func fetchBooks(ids: Set<String>) async -> [Book] {
+    private func fetchBooks(ids: Set<String>) async -> FavoritesResult<Book> {
         await fetchAll(ids: ids) { id in
             try await fetchBook.execute(idOrSlug: id)
         }
@@ -92,9 +104,11 @@ final class FavoritesTabViewModel {
     private func fetchAll<T>(
         ids: Set<String>,
         fetcher: @escaping (String) async throws -> T
-    ) async -> [T] {
-        guard !ids.isEmpty else { return [] }
-        return await withTaskGroup(of: T?.self) { group in
+    ) async -> FavoritesResult<T> {
+        guard !ids.isEmpty else { return .init(items: [], failures: 0) }
+        var failures = 0
+
+        let items: [T] = await withTaskGroup(of: T?.self) { group in
             for id in ids {
                 group.addTask {
                     try? await fetcher(id)
@@ -104,10 +118,14 @@ final class FavoritesTabViewModel {
             for await item in group {
                 if let value = item {
                     items.append(value)
+                } else {
+                    failures += 1
                 }
             }
             return items
         }
+
+        return FavoritesResult(items: items, failures: failures)
     }
 
     private func removeLocal(id: String, type: FavoriteType) {
@@ -122,4 +140,9 @@ final class FavoritesTabViewModel {
             books.removeAll { $0.id == id }
         }
     }
+}
+
+struct FavoritesResult<T> {
+    let items: [T]
+    let failures: Int
 }

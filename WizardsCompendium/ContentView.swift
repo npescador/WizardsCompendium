@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var spellsViewModel: SpellsViewModel
     @State private var searchViewModel: AlohomoraViewModel
     @State private var favoritesViewModel: FavoritesTabViewModel
+    @State private var favoritesCoordinator: FavoritesCoordinator
 
     private let charactersRepository: CharactersRepository
     private let spellsRepository: SpellsRepository
@@ -60,6 +61,14 @@ struct ContentView: View {
             fetchMovie: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
             fetchBook: DefaultFetchBookDetailUseCase(repo: booksRepository)
         ))
+        _favoritesCoordinator = State(initialValue: FavoritesCoordinator(
+            dependencies: FavoritesDetailDependencies(
+                fetchCharacterDetail: DefaultFetchCharacterDetailUseCase(repo: charactersRepository),
+                fetchSpellDetail: DefaultFetchSpellDetailUseCase(repo: spellsRepository),
+                fetchMovieDetail: DefaultFetchMovieDetailUseCase(repo: moviesRepository),
+                fetchBookDetail: DefaultFetchBookDetailUseCase(repo: booksRepository)
+            )
+        ))
 
         self.charactersRepository = charactersRepository
         self.spellsRepository = spellsRepository
@@ -84,15 +93,10 @@ struct ContentView: View {
                 Label("Hechizos", systemImage: "wand.and.stars")
             }
 
-            NavigationStack {
-                FavoritesTabView(
-                    viewModel: favoritesViewModel,
-                    charactersRepo: charactersRepository,
-                    spellsRepo: spellsRepository,
-                    moviesRepo: moviesRepository,
-                    booksRepo: booksRepository
-                )
-            }
+            FavoritesTabView(
+                viewModel: favoritesViewModel,
+                coordinator: favoritesCoordinator
+            )
             .tabItem {
                 Label("Favoritos", systemImage: "star.fill")
             }
@@ -150,21 +154,23 @@ struct ContentView: View {
         }
         .tabItem { Label("Hechizos", systemImage: "wand.and.stars") }
 
-        NavigationStack {
-            FavoritesTabView(
-                viewModel: FavoritesTabViewModel(
-                    favoritesStore: favoritesStore,
-                    fetchCharacter: PreviewCharactersRepository(),
-                    fetchSpell: PreviewSpellsRepository(),
-                    fetchMovie: PreviewMoviesRepository(),
-                    fetchBook: PreviewBooksRepository()
-                ),
-                charactersRepo: PreviewCharactersRepository(),
-                spellsRepo: PreviewSpellsRepository(),
-                moviesRepo: PreviewMoviesRepository(),
-                booksRepo: PreviewBooksRepository()
+        FavoritesTabView(
+            viewModel: FavoritesTabViewModel(
+                favoritesStore: favoritesStore,
+                fetchCharacter: PreviewCharactersRepository(),
+                fetchSpell: PreviewSpellsRepository(),
+                fetchMovie: PreviewMoviesRepository(),
+                fetchBook: PreviewBooksRepository()
+            ),
+            coordinator: FavoritesCoordinator(
+                dependencies: FavoritesDetailDependencies(
+                    fetchCharacterDetail: PreviewCharactersRepository(),
+                    fetchSpellDetail: PreviewSpellsRepository(),
+                    fetchMovieDetail: PreviewMoviesRepository(),
+                    fetchBookDetail: PreviewBooksRepository()
+                )
             )
-        }
+        )
         .tabItem { Label("Favoritos", systemImage: "star.fill") }
 
         NavigationStack {
@@ -297,6 +303,7 @@ private final class PreviewBooksRepository: BooksRepository, SearchBooksUseCase 
     ]
 }
 
+#if DEBUG
 private final class PreviewFavoritesStore: FavoritesStore {
     private var characterIDs: Set<String>
     private var spellIDs: Set<String>
